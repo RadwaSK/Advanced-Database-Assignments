@@ -100,6 +100,46 @@ int main(){
 
     */
 
+   // ================== START OF Multiple Hashing Test Case =============== // 
+   /*
+   insert(1, 20);  // hash1(1) = 1
+   insert(2, 70);  // hash1(2) = 2
+   insert(42, 80); // hash1(42) = 2, will be put in 2nd record withing Bucket#2
+   insert(4, 25);  // hash1(4) = 4
+   insert(12, 44);  //hash1(12) = 2, busy, (hash1(12) + hash2(12)) % 10 = (2 + 2) % 10 = 4, will be put in 2nd record within Bucket#2
+   insert(14, 32);  // hash1(14) = 4, busy, (hash1(14) + hash2(14)) % 10 = (4 + 7) % 10 = 1, will be put in 2nd record withing Bucket#1
+   insert(24, 11); // hash1(24) = 4, busy, (hash1(24) + hash2(24)) % 10 = (4 + 4) % 10 = 8
+   insert(10, 78); // hash1(10) = 0
+   insert(20, 97); // hash1(10) = 0, will be put in 2nd record withing Bucket#2
+   insert(70, 34); // hash1(70) = 0, busy, (hash1(70) + hash2(70)) % 10 = (0 + 7) % 10 = 7
+   insert(140, 730); // hash1(140) = 0, busy, (hash1(140) + hash2(140)) % 10 = (0 + 7) % 10 = 7, put in 2nd rec. within Bucket#7
+   insert(280, 133); // hash1(280) = 0, busy, (hash1(280) + hash2(280)) % 10 = (0 + 7) % 10 = 7, busy, 
+                     // start open Addressing from next record, so put in Bucket#8 rec2
+   insert(48, 840); // hash1(48) = 8, busy, (hash1(48) + hash2(48)) % 10 = (8 + 1) % 10 = 9
+   insert(8, 83);  // hash1(8) = 8, busy, (hash1(8) + hash2(8)) % 10 = (8 + 6) % 10 = 4, busy,
+                     // start open Addressing from next record, so put in Bucket#5 rec1
+
+
+   //4. Display the database file again
+   DisplayFile(filehandle);
+
+   //5. Search the database
+   search(1); // should be 1
+   search(42); // should be 2
+   search(24); // should be 3
+   search(12); // should be 4
+   search(8); // should be 5
+   search(280); // should be 6
+   search(1000); // not found
+
+   //6. delete an item from the database
+   deleteItem(1); // 1
+   deleteItem(70); // 3
+   deleteItem( 18); // not found
+   */
+   // ================== END OF Multiple Hashing Test Case =============== // 
+
+
    //4. Display the database file again
    DisplayFile(filehandle);
 

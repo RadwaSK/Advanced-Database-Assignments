@@ -20,7 +20,7 @@
 #define RECORDSPERBUCKET 2				//No. of records inside each Bucket
 #define BUCKETSIZE sizeof(Bucket)		//Size of the bucket (in bytes)
 #define FILESIZE BUCKETSIZE*MBUCKETS    //Size of the file 
-
+#define PRIME 7
 
 //Data Record inside the file
 struct DataItem {
@@ -33,7 +33,6 @@ struct DataItem {
 //Each bucket contains number of records
 struct Bucket {
 	struct DataItem  dataItem[RECORDSPERBUCKET];
-
 };
 
 //Check the create File
