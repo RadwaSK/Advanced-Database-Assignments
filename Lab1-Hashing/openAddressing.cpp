@@ -33,6 +33,43 @@ int hashCode(int key){
  */
 int insertItem(int fd,DataItem item){
    //TODO: implement this function
+   //Definitions
+	struct DataItem data;   //a variable to read in it the records from the db
+	int count = 0;				//No of accessed records
+	int rewind = 0;			//A flag to start searching from the first bucket
+	int hashIndex = hashCode(item.key);  				//calculate the Bucket index
+	int startingOffset = hashIndex*sizeof(Bucket);		//calculate the starting address of the bucket
+	int Offset = startingOffset;						//Offset variable which we will use to iterate on the db
+
+	//Main Loop
+	RESEEK:
+	//on the linux terminal use man pread to check the function manual
+	ssize_t result = pread(fd,&data,sizeof(DataItem), Offset);
+	//one record accessed
+	(count)++;
+	//check whether it is a valid record or not
+    if(result <= 0) //either an error happened in the pread or it hit an unallocated space
+	{ 	 // perror("some error occurred in pread");
+		  return -1;
+    }
+    else if (data.valid != 1 ) {
+    	//this place is empty contain no entered data
+    			pwrite(fd, &item, sizeof(DataItem), Offset); // write the data in the item object
+                return count;
+
+    } else { //it is full place
+    		Offset +=sizeof(DataItem);  //move the offset to next record
+    		if(Offset >= FILESIZE && rewind ==0 )
+    		 { //if reached end of the file start again
+    				rewind = 1;
+    				Offset = 0;
+    				goto RESEEK;
+    	     } else
+    	    	  if(rewind == 1 && Offset >= startingOffset) {
+    				return -1; //no empty spaces here i made complete cycle
+    	     }
+    		goto RESEEK;
+    }
    return 0;
 }
 

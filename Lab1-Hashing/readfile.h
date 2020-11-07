@@ -24,7 +24,7 @@
 
 //Data Record inside the file
 struct DataItem {
-   int valid;    //0 means invalid record, 1 = valid record
+   int valid;    //) means invalid record, 1 = valid record
    int data;     
    int key;
 };
