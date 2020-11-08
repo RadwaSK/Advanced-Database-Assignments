@@ -3,7 +3,7 @@
 // Author      : 
 // Version     :
 // Copyright   : Code adapted From https://www.tutorialspoint.com/
-// Description : Hashing using open addressing
+// Description : Hashing using chaining
 //============================================================================
 
 #include "readfileChaining.h"
@@ -52,42 +52,58 @@ int main(){
 
   
   //3. Add some data in the table
-   insert(1, 20);
-   insert(2, 70);
-   insert(42, 80);
-   insert(4, 25);
-   insert(12, 44);
-   /*
-   insert(14, 32);
-   insert(17, 11);
-   insert(13, 78);
-   insert(37, 97);
-   insert(11, 34);
-   insert(22, 730);
-   insert(46, 840);
-   insert(9, 83);
-   insert(21, 424);
-   insert(41, 115);
-   insert(71, 47);
-   insert(31, 92);
-   insert(73, 45);
-   */
+   insert(1, 20); // bucket 1.1
+   insert(2, 70); // bucket 2.1
+   insert(42, 80); // bucket 2.2
+   insert(4, 25); // bucket 4.1
+   insert(12, 44); // overflow offset = 360
+   insert(14, 32); // bucket 4.2
+   insert(17, 11); // bucket 7.1
+   insert(13, 78); // bucket 3.1
+   insert(37, 97); // bucket 7.2
+   insert(11, 34); // bucket 1.2
+   insert(22, 730); // overflow offset = 376
+   insert(46, 840); // bucket 6.1
+   insert(9, 83); // bucket 9.1
+   insert(21, 424); // overflow offset = 392
+   insert(41, 115); // overflow offset = 408
+   insert(71, 47); // overflow offset = 424
+   insert(31, 92); // overflow offset = 440
+   insert(73, 45); // bucket 3.2
+   
 
    //4. Display the database file again
    DisplayFile(filehandle);
    
    //5. Search the database
+   printf("searching for element whose key = 42 (in main file)-- offset should be 88");
    search(42);
+   printf("searching for element whose key = 12 (in overflow area)-- offset should be 360");
    search(12);
+   printf("searching for element whose key = 71 (in overflow area)-- offset should be 424");
+   search(71);
+   printf("searching for element whose key = 70 (does not exist in DB)-- offset should be -1");
+   search(70);
 
-/*
+
    //6. delete an item from the database
-   deleteItem(31);
-
-   //7. Display the final data base
+   deleteItem(31); // delete first item in overfow area for bucket 1 @ offset = 440
+   DisplayFile(filehandle);
+  
+   deleteItem(21); // delete last item in overfow area for bucket 1 @ offset = 392
+   DisplayFile(filehandle);
+   
+   deleteItem(9); // delete item inside bucket 9 having no overflow and offset = 324
    DisplayFile(filehandle);
 
-*/
+   deleteItem(2); // delete the first element in bucket 2 // there is overflow for this bucket
+                  // item in offset 376 should be transfered to this place
+   DisplayFile(filehandle);
+   struct DataItem data;
+   pread(filehandle,&data,sizeof(DataItem), 440);
+   printf("%d\n", data.valid);
+
+
    // And Finally don't forget to close the file.
    close(filehandle);
    return 0;
@@ -140,13 +156,15 @@ int deleteItem(int key){
    item->key = key;
    int diff = 0;
    int Offset= searchItem(filehandle,item,&diff);
+   printf("item offset = %d\n", Offset);
    printf("Delete: No of records searched is %d\n",diff);
 
 
    // read the corresponding bucket
-   int bucketoffset = Offset/sizeof(BUCKETSIZE); 
+   int bucketOffset = (key % MBUCKETS)*sizeof(Bucket);
+   printf("Bucket offset = %d\n", bucketOffset); 
    struct Bucket bucket;
-   pread(filehandle,&bucket,sizeof(Bucket), bucketoffset);
+   pread(filehandle,&bucket,sizeof(Bucket), bucketOffset);
 
    struct DataItem data;
    // read the first record from this family that is in the overflow area
@@ -154,23 +172,26 @@ int deleteItem(int key){
 
    // case 1 : offset is in main file  
    if(Offset >=0 &&  Offset < MAINFILESIZE){
+      printf("*****item to be deleted is in main file*****\n");
       //no overflow exist in this bucket
-      
-      if (bucket.dataItemptr == -1){ // no overflow
-         return deleteOffset(filehandle,Offset);
+      int deleteResult = deleteOffset(filehandle,Offset);
+
+      if (bucket.dataItemptr == -1 || bucket.dataItemptr == 0){ // no overflow
+         printf("*****no overflow*****\n");
+         return deleteResult;
       }
-      else {//there is an overflow in this bucket
-         // delete this record from main bucket
-         int deleteResult = deleteOffset(filehandle,Offset);
-         struct DataItem data;
-         // insert that record normally .. and it should be inserted into the place of the deleted record
-         insertItem(filehandle, data);
-         // update the bucket pointer to the pointer inside the read record
-         bucket.dataItemptr = data.dataItemptr;
-         pwrite(filehandle,&bucket,sizeof(Bucket), bucketoffset);
-         // set the valid bit of the overflow record to 0 and rewrite it again
-         data.valid = 0;
-         pwrite(filehandle,&data,sizeof(DataItem), bucket.dataItemptr);
+      else {
+         printf("*****there is overflow*****\n");
+         struct DataItem tempData;
+         pread(filehandle,&tempData,sizeof(DataItem), bucket.dataItemptr);
+
+         deleteOffset(filehandle,bucket.dataItemptr);
+
+         pread(filehandle,&bucket,sizeof(Bucket), bucketOffset);
+         bucket.dataItemptr = tempData.dataItemptr;
+         pwrite(filehandle,&bucket,sizeof(Bucket), bucketOffset);
+
+         insertItem(filehandle, tempData);
          return deleteResult;
       }  
    }
@@ -179,27 +200,28 @@ int deleteItem(int key){
    
    // case 2 : offset is the first record in overflow area
    if (Offset == bucket.dataItemptr){
+      printf("*****item to be deleted is the first element in overflow area*****");
       bucket.dataItemptr = data.dataItemptr;
-      pwrite(filehandle,&bucket,sizeof(Bucket), bucketoffset);
+      pwrite(filehandle,&bucket,sizeof(Bucket), bucketOffset);
       return deleteOffset(filehandle, Offset);
    }
 
    // case 3: offset is one of the records in overflow area
    int currPtr = -1;
    int prevPtr = -1;
-   
+   printf("*****item to be deleted is in overflow area*****");
    // here "data" has the value of the first record in overflow area for that bucket also 
 
    prevPtr = bucket.dataItemptr; // the offset of 1st element in the oveflow
    currPtr = data.dataItemptr; // the offset of the 2nd element in overflow
    while (currPtr != -1) {
       ssize_t result = pread(filehandle,&data,sizeof(DataItem), currPtr);
-      if (data.key = key){
+      if (data.key == key){
          struct DataItem prevData;
          pread(filehandle,&prevData,sizeof(DataItem), prevPtr);
          prevData.dataItemptr = data.dataItemptr;
          pwrite(filehandle,&prevData,sizeof(DataItem), prevPtr);
-
+         printf("currPtr = %d\n", currPtr);
          return deleteOffset(filehandle, currPtr);
       }
       prevPtr = currPtr;

@@ -1,7 +1,7 @@
 #include "readfileChaining.h"
 
 int hashCode(int key){
-   printf("hash index = %d", key % MBUCKETS);
+   //printf("hash index = %d\n", key % MBUCKETS);
    return key % MBUCKETS;
    
 }
@@ -13,32 +13,37 @@ int insertItem(int fd,DataItem item){
     int startingOffset = hashIndex*sizeof(Bucket);		//calculate the starting address of the bucket
     int Offset = startingOffset;
     struct Bucket bucket;
+    int count = 0;
     ssize_t result = pread(fd,&bucket,sizeof(Bucket), Offset);
     
     // insertion in main buckets
    
     int i=0;
     while (i < RECORDSPERBUCKET){ // iterate on records inside each bucket
+        count ++;
         if (bucket.dataItem[i].valid != 1 ){
             bucket.dataItem[i].data = item.data;
             bucket.dataItem[i].key = item.key;
             bucket.dataItem[i].valid = item.valid;
             bucket.dataItem[i].dataItemptr = item.dataItemptr;
             int result = pwrite(fd,&bucket,sizeof(Bucket), Offset);
-            printf("successfuly inserted in main buckets");
+            printf("successfuly inserted in main buckets\n");
             printf("Bucket: %d, Offset %d:~\n",Offset/BUCKETSIZE, Offset+ i*sizeof(DataItem));
             
-            return Offset+ i*sizeof(DataItem);
+            //return Offset+ i*sizeof(DataItem);
+            return count;
         } 
+        
         i++; 
     }
     // no place inside the main buckets
     // search in the overflow area
-    printf("***********no space in main file*********** \n");
+    // printf("no space in main file \n");
 
     int startingOffsetOverflow = MBUCKETS*sizeof(Bucket);
     Offset = startingOffsetOverflow;
     while(Offset < FILESIZE){
+        count ++;
         struct DataItem data;
         ssize_t result = pread(fd,&data,sizeof(DataItem), Offset);
         if(result < 0) { 	  
@@ -49,12 +54,13 @@ int insertItem(int fd,DataItem item){
             data.data = item.data;
             data.key = item.key;
             data.valid = item.valid;
-            data.dataItemptr = item.dataItemptr;
+            data.dataItemptr = bucket.dataItemptr;
             int result = pwrite(fd,&data,sizeof(DataItem), Offset);
-            printf("successfuly inserted in overflow area");
+            printf("successfuly inserted in overflow area at offest = %d \n", Offset);
             bucket.dataItemptr = Offset;
             pwrite(fd,&bucket,sizeof(Bucket), startingOffset);
-            return Offset;
+            //return Offset;
+            return count;
         }
         Offset += sizeof(DataItem);
     }
@@ -118,12 +124,14 @@ int searchItem(int fd,struct DataItem* item,int *count) {
         i++;
     } // end while
     // start searching in overflow area
-    printf("*********start searching in oveflow area*********\n");
-    //struct Bucket dummy;
-    //pread(fd,&dummy,sizeof(Bucket), 72);
-    //printf("---------- pointer of bucket # 2 = %d \n", dummy.dataItemptr);
+    //printf("start searching in oveflow area\n");
+    
+    if (dataItemPointer == 0 || dataItemPointer == -1){
+        return -1;
+    }
     
     while (dataItemPointer != -1){
+        (*count)++;
         struct DataItem data;
         int Offset = dataItemPointer;
         ssize_t result = pread(fd,&data,sizeof(DataItem), Offset); 
