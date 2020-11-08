@@ -53,67 +53,77 @@ int main(){
   //3. Add some data in the table
   
   //test case 1
-   insert(1, 20);
-   insert(2, 70);
-   insert(42, 80);
-   insert(4, 25);
-   insert(12, 44);
-   insert(14, 32);
-   insert(17, 11);
-   insert(13, 78);
-   insert(37, 97);
-   insert(11, 34);
-   insert(22, 730);
-   insert(46, 840);
-   insert(9, 83);
-   insert(21, 424);
-   insert(41, 115);
-   insert(71, 47);
-   insert(31, 92);
-   insert(73, 45);
-
-
-
-/*
-   // Testcase 2
    //3. Add some data in the table
-    insert(1, 20);
-    insert(2, 70);
-    insert(42, 80);
-    insert(4, 25);
-    insert(12, 44);
-    insert(14, 32);
-    insert(17, 11);
-    insert(13, 78);
-    insert(37, 97);
-    insert(11, 34);
-    insert(22, 730);
-    insert(46, 840);
-    insert(9, 83);
-    insert(21, 424);
-    insert(41, 115);
-    insert(71, 47);
-    insert(31, 92);
-    insert(73, 45);
-    insert(97, 11);
-    insert(10, 28);
+   insert(1, 20);//1.1
+   insert(2, 70);//2.1
+   insert(42, 80);//2.2 
+   insert(4, 25);//4.1
+   insert(12, 44);//2 colision (in 3.1)
+   insert(14, 32);//2 colision (in 3.2)
+   insert(17, 11);//7.1
+   insert(13, 78);//3->4.2
+   insert(37, 97);//7.2
+   insert(11, 34);//1.2
+   insert(22, 730);//2->5.1
+   insert(46, 840);//6.1
+   insert(9, 83);//9.1
+   insert(21, 424);//1->5.2
+   insert(41, 115);//1->6.1
+   insert(71, 47);//1->6.2
+   insert(31, 92);//1->8.1
+   insert(73, 45);//3->8.2
+   insert(97, 11);//7->9.2
+   
 
-    */
+   //4. Display the database file again
+   DisplayFile(filehandle);
 
+   //5. Search the database
+   search(13);//4.2->4 collision
+   search(97);//9.2->4collision
 
+   //6. delete an item from the database
+   deleteItem(31);//8.1 free
+   deleteItem(9);//9.1 free
+   deleteItem(14);//3.2 free
+
+   //7. Display the final data base
+   DisplayFile(filehandle);
+   
+   /*
+  //test case 2
+   insert(1, 20);//1.1
+   insert(2, 70);//2.1
+   insert(42, 80);//2.2
+   insert(4, 25);//4.1
+   insert(12, 44);//2 collision3.1
+   insert(14, 32);//2 collision3.2
+   insert(17, 11);//7.1
+   insert(13, 78);//4.2
+   insert(37, 97);//7.2
+   insert(11, 34);//1.2
+   insert(22, 730);//5.1
+   insert(46, 840);//6.1
+   insert(9, 83);//9.1
+   insert(21, 424);5.2
+   insert(41, 115);//6.2
+   insert(71, 47);//8.1
+   insert(31, 92);//8.1
+   insert(73, 45);//9.1
 
 
    //4. Display the database file again
    DisplayFile(filehandle);
 
    //5. Search the database
-   search(13);
+   search(13);//4.2
 
    //6. delete an item from the database
-   deleteItem(31);
+   deleteItem(31);//8.1 free
 
    //7. Display the final data base
    DisplayFile(filehandle);
+   */
    // And Finally don't forget to close the file.
    close(filehandle);
    return 0;
