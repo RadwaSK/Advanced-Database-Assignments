@@ -17,10 +17,10 @@
 
 
 #define MBUCKETS  10					//Number of BUCKETS
-#define TOTALBUCKETS 20                 //total number of buckets including the overflow area
 #define RECORDSPERBUCKET 2				//No. of records inside each Bucket
 #define BUCKETSIZE sizeof(Bucket)		//Size of the bucket (in bytes)
-#define FILESIZE BUCKETSIZE*MBUCKETS    //Size of the file 
+#define MAINFILESIZE BUCKETSIZE*MBUCKETS //main file size without overflow
+#define FILESIZE BUCKETSIZE*MBUCKETS + MBUCKETS*RECORDSPERBUCKET*sizeof(DataItem)  //Size of the file (main buckets + overflow area)
 
 
 //Data Record inside the file
@@ -28,22 +28,25 @@ struct DataItem {
    int valid;    //) means invalid record, 1 = valid record
    int data;     
    int key;
-   DataItem* ptr;
+   int dataItemptr = -1; // holds the offset of the next record in overflow
 };
 
 
 //Each bucket contains number of records and a pointer to overflow records
 struct Bucket {
 	struct DataItem  dataItem[RECORDSPERBUCKET];
-    DataItem* ptr;
+    int dataItemptr = -1; // holds the offset of the next record in overflow
 };
 
 //Check the create File
 int createFile(int size, char *);
 
+
 //check the chaining File
 int deleteItem(int key);
 int insertItem(int fd,DataItem item);
+int DisplayFile(int fd);
+int deleteOffset(int filehandle, int Offset);
 int searchItem(int filehandle,struct DataItem* item,int *count);
 
 
